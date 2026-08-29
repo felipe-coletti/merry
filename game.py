@@ -49,8 +49,16 @@ class Game:
                 "magnum",
                 "magnum_projectile.png"
             ),
+            os.path.join(
+                "assets",
+                "images",
+                "weapons",
+                "magnum",
+                "magnum_muzzle_flash.png"
+            ),
             projectile_speed=30,
             projectile_scale=0.5,
+            muzzle_offset=(37, -7),
             fire_cooldown=550
         )
 

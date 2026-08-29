@@ -7,20 +7,21 @@ class Weapon:
             self,
             image_path,
             projectile_image_path,
+            muzzle_flash_image_path,
             distance=30,
-            barrel_length=20,
             projectile_speed=10,
             projectile_scale=0.5,
+            muzzle_offset=(20, -3),
             fire_cooldown=150,
             recoil_amount=6,
             recoil_recovery=1
     ):
         self.image = pygame.image.load(image_path).convert_alpha()
         self.projectile_image = pygame.image.load(projectile_image_path).convert_alpha()
+        self.muzzle_flash_image = pygame.image.load(muzzle_flash_image_path).convert_alpha()
 
         self.distance = distance
 
-        self.barrel_length = barrel_length
         self.projectile_speed = projectile_speed
         self.projectile_scale = projectile_scale
 
@@ -31,9 +32,25 @@ class Weapon:
         self.recoil_amount = recoil_amount
         self.recoil_recovery = recoil_recovery
 
+        self.muzzle_flash_until = 0
+        self.muzzle_flash_position = pygame.Vector2()
+        self.muzzle_offset = pygame.Vector2(muzzle_offset[0], muzzle_offset[1])
+
         self.position = pygame.Vector2()
         self.direction = pygame.Vector2(1, 0)
         self.angle = 0
+
+
+    def get_muzzle_position(self):
+        offset = pygame.Vector2(self.muzzle_offset)
+
+        if self.direction.x < 0:
+            offset.y *= -1
+
+        offset = offset.rotate(-self.angle)
+
+        return self.position + offset
+
 
     def update(self, owner_center):
         mouse_position = pygame.Vector2(pygame.mouse.get_pos())
@@ -70,11 +87,14 @@ class Weapon:
 
         self.recoil = self.recoil_amount
 
-        barrel_position = self.position + self.direction * self.barrel_length
+        muzzle_position = self.get_muzzle_position()
+
+        self.muzzle_flash_position = muzzle_position
+        self.muzzle_flash_until = current_time + 50
 
         return Projectile(
             self.projectile_image,
-            barrel_position,
+            muzzle_position,
             self.direction,
             self.projectile_speed,
             self.projectile_scale
@@ -99,3 +119,15 @@ class Weapon:
         rect = image.get_rect(center=self.position)
 
         screen.blit(image, rect)
+
+        if pygame.time.get_ticks() < self.muzzle_flash_until:
+            flash = pygame.transform.rotate(
+                self.muzzle_flash_image,
+                self.angle
+            )
+
+            flash_rect = flash.get_rect(
+                center=self.muzzle_flash_position
+            )
+
+            screen.blit(flash, flash_rect)
