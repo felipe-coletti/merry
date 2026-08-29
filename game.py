@@ -51,7 +51,7 @@ class Game:
             ),
             projectile_speed=30,
             projectile_scale=0.5,
-            fire_cooldown=500
+            fire_cooldown=550
         )
 
         self.bounds = pygame.Rect(

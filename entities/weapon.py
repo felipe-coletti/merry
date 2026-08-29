@@ -11,7 +11,9 @@ class Weapon:
             barrel_length=20,
             projectile_speed=10,
             projectile_scale=0.5,
-            fire_cooldown=150
+            fire_cooldown=150,
+            recoil_amount=6,
+            recoil_recovery=1
     ):
         self.image = pygame.image.load(image_path).convert_alpha()
         self.projectile_image = pygame.image.load(projectile_image_path).convert_alpha()
@@ -25,6 +27,10 @@ class Weapon:
         self.fire_cooldown = fire_cooldown
         self.last_shot = 0
 
+        self.recoil = 0
+        self.recoil_amount = recoil_amount
+        self.recoil_recovery = recoil_recovery
+
         self.position = pygame.Vector2()
         self.direction = pygame.Vector2(1, 0)
         self.angle = 0
@@ -35,18 +41,23 @@ class Weapon:
 
         direction = mouse_position - owner_center
 
-        if direction.length_squared() == 0:
-            return
+        if direction.length_squared() != 0:
+            self.direction = direction.normalize()
 
-        self.direction = direction.normalize()
+            self.angle = self.direction.angle_to(
+                pygame.Vector2(1, 0)
+            )
 
-        self.angle = self.direction.angle_to(
-            pygame.Vector2(1, 0)
+        self.recoil = max(
+            self.recoil - self.recoil_recovery,
+            0
         )
 
         self.position = (
-            owner_center
-            + self.direction * self.distance
+                owner_center
+                + self.direction * (
+                        self.distance - self.recoil
+                )
         )
 
     def shoot(self):
@@ -56,6 +67,8 @@ class Weapon:
             return None
 
         self.last_shot = current_time
+
+        self.recoil = self.recoil_amount
 
         barrel_position = self.position + self.direction * self.barrel_length
 
