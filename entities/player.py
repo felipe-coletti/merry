@@ -7,8 +7,17 @@ class Player(Character):
         super().__init__(skin, position)
 
         self.health = 100
+        self.max_health = 100
         self.damage_cooldown = 500
         self.last_damage = 0
+
+        self.adrenaline = 0
+        self.max_adrenaline = 100
+        self.adrenaline_decay = 2
+        self.adrenaline_cooldown = 500
+        self.last_adrenaline = 0
+
+        self.adrenaline_speed_bonus = 5
 
         self.weapon = weapon
         self.bounds = bounds
@@ -21,7 +30,36 @@ class Player(Character):
             return
 
         self.last_damage = current_time
-        self.health -= damage
+
+        if self.health > damage:
+            self.health -= damage
+        else:
+            self.health = 0
+
+
+    def add_adrenaline(self, amount):
+        self.adrenaline = min(
+            self.adrenaline + amount,
+            self.max_adrenaline
+        )
+
+
+    def update_adrenaline(self):
+        current_time = pygame.time.get_ticks()
+
+        if current_time - self.last_adrenaline < self.adrenaline_cooldown:
+            return
+
+        self.last_adrenaline = current_time
+
+        if self.adrenaline > 0:
+            self.adrenaline -= self.adrenaline_decay
+
+
+    def current_speed(self):
+        return self.speed + (
+            self.adrenaline / self.max_adrenaline
+        ) * self.adrenaline_speed_bonus
 
 
     def move(self, dx, dy, obstacles):
@@ -48,26 +86,28 @@ class Player(Character):
         dx = 0
         dy = 0
 
+        speed = self.current_speed()
+
         moving = False
 
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             self.direction = "left"
-            dx -= self.speed
+            dx -= speed
             moving = True
 
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             self.direction = "right"
-            dx += self.speed
+            dx += speed
             moving = True
 
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             self.direction = "up"
-            dy -= self.speed
+            dy -= speed
             moving = True
 
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             self.direction = "down"
-            dy += self.speed
+            dy += speed
             moving = True
 
         self.move(dx, dy, obstacles)

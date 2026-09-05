@@ -1,9 +1,10 @@
 import pygame
 
+from settings import FLOOR_COLOR, WALL_COLOR, OBSTACLE_COLOR
+
 class Level:
     def __init__(self, size):
         self.size = size
-        self.floor_color = (180, 180, 180)
 
         self.walls = [
             pygame.Rect(0, 0, size[0], 20),
@@ -32,18 +33,18 @@ class Level:
         return self.walls + self.obstacles
 
     def draw(self, screen):
-        screen.fill(self.floor_color)
-        
+        screen.fill(FLOOR_COLOR)
+
         for wall in self.walls:
             pygame.draw.rect(
                 screen,
-                (40, 40, 40),
+                WALL_COLOR,
                 wall
             )
 
         for obstacle in self.obstacles:
             pygame.draw.rect(
                 screen,
-                (80, 80, 80),
+                OBSTACLE_COLOR,
                 obstacle
             )

@@ -171,6 +171,10 @@ class Game:
                     if enemy.health <= 0:
                         self.enemies.remove(enemy)
 
+                        self.player.add_adrenaline(
+                            enemy.ADRENALINE_REWARD
+                        )
+
                     break
 
             if not self.bounds.collidepoint(projectile.position):
@@ -188,15 +192,17 @@ class Game:
         self.update_ammo_pickups()
         self.update_enemies()
         self.update_projectiles()
-        
+
+        self.player.update_adrenaline()
 
     def draw_hud(self):
         ammo_text = self.font.render(
-            f"Health: {self.player.health}\n"
+            f"Health: {self.player.health}/{self.player.max_health}\n"
+            f"Adrenaline: {self.player.adrenaline}/{self.player.max_adrenaline}\n"
             f"Ammo: {self.player.weapon.ammo}/{self.player.weapon.capacity}\n"
             f"Reserve Ammo: {self.player.weapon.reserve_ammo}",
             True,
-            (255, 255, 255)
+            BLOOD_COLOR
         )
 
         self.screen.blit(ammo_text, (10, 10))

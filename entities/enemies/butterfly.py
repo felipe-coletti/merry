@@ -2,6 +2,8 @@ import pygame
 
 
 class Butterfly:
+    ADRENALINE_REWARD = 10
+    
     def __init__(self, image_path, position, scale=0.5, speed=1, health=1):
         image = pygame.image.load(image_path).convert_alpha()
         
@@ -17,7 +19,10 @@ class Butterfly:
 
 
     def take_damage(self, damage):
-        self.health -= damage
+        if self.health > damage:
+            self.health -= damage
+        else:
+            self.health = 0
 
 
     def update(self, target):
