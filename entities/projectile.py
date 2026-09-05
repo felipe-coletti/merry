@@ -18,8 +18,11 @@ class Projectile:
             pygame.Vector2(1, 0)
         )
 
+        self.rect = self.image.get_rect(center=self.position)
+
     def update(self):
         self.position += self.direction * self.speed
+        self.rect.center = self.position
 
     def draw(self, screen):
         image = pygame.transform.rotate(

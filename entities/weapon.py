@@ -38,7 +38,7 @@ class Weapon:
 
         self.capacity = 6
         self.ammo = 6
-        self.reserve_ammo = 0
+        self.reserve_ammo = 6
 
         self.reloading = False
         self.reload_time = 1500

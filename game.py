@@ -5,6 +5,7 @@ from graphics.character_skin import CharacterSkin
 from entities.weapon import Weapon
 from entities.player import Player
 from entities.ammo_pickup import AmmoPickup
+from entities.enemies.butterfly import Butterfly
 
 from settings import *
 
@@ -23,6 +24,8 @@ class Game:
         self.ammo_pickups = []
 
         self.projectiles = []
+
+        self.enemies = []
 
         skin = CharacterSkin(
             os.path.join(
@@ -92,6 +95,22 @@ class Game:
             )
         )
 
+        butterfly_image = os.path.join(
+            "assets",
+            "images",
+            "enemies",
+            "butterfly",
+            "butterfly.png"
+        )
+
+        self.enemies.append(
+            Butterfly(
+                butterfly_image,
+                (600, 300),
+                scale=1.5,
+            )
+        )
+
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -108,11 +127,8 @@ class Game:
                 if event.key == pygame.K_r:
                     self.player.weapon.reload()
 
-    def update(self):
-        keys = pygame.key.get_pressed()
 
-        self.player.update(keys)
-
+    def update_ammo_pickups(self):
         for pickup in self.ammo_pickups[:]:
             if self.player.rect.colliderect(pickup.rect):
                 self.player.weapon.add_ammo(
@@ -121,11 +137,53 @@ class Game:
 
                 self.ammo_pickups.remove(pickup)
 
+
+    def update_enemies(self):
+        for enemy in self.enemies[:]:
+            enemy.update(self.player.center)
+
+            if enemy.rect.colliderect(self.player.rect):
+                self.player.take_damage(1)
+
+
+    def update_projectiles(self):
         for projectile in self.projectiles[:]:
             projectile.update()
 
+            for enemy in self.enemies[:]:
+                if enemy.rect.colliderect(projectile.rect):
+                    enemy.take_damage(1)
+                    self.projectiles.remove(projectile)
+
+                    if enemy.health <= 0:
+                        self.enemies.remove(enemy)
+
+                    break
+
             if not self.bounds.collidepoint(projectile.position):
                 self.projectiles.remove(projectile)
+    
+
+    def update(self):
+        keys = pygame.key.get_pressed()
+
+        self.player.update(keys)
+
+        self.update_ammo_pickups()
+        self.update_enemies()
+        self.update_projectiles()
+        
+
+    def draw_hud(self):
+        ammo_text = self.font.render(
+            f"Health: {self.player.health}\n"
+            f"Ammo: {self.player.weapon.ammo}/{self.player.weapon.capacity}\n"
+            f"Reserve Ammo: {self.player.weapon.reserve_ammo}",
+            True,
+            (255, 255, 255)
+        )
+
+        self.screen.blit(ammo_text, (10, 10))
 
     def draw(self):
         self.screen.fill(SKY_COLOR)
@@ -135,17 +193,13 @@ class Game:
 
         self.player.draw(self.screen)
 
+        for enemy in self.enemies:
+            enemy.draw(self.screen)
+
         for projectile in self.projectiles:
             projectile.draw(self.screen)
 
-        ammo_text = self.font.render(
-            f"ammo: {self.player.weapon.ammo}/{self.player.weapon.capacity}\n"
-            f"reserve_ammo: {self.player.weapon.reserve_ammo}",
-            True,
-            (255, 255, 255)
-        )
-
-        self.screen.blit(ammo_text, (10, 10))
+        self.draw_hud()
 
         pygame.display.flip()
 

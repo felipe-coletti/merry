@@ -6,8 +6,22 @@ class Player(Character):
     def __init__(self, skin, position, weapon, bounds):
         super().__init__(skin, position)
 
+        self.health = 100
+        self.damage_cooldown = 500
+        self.last_damage = 0
+
         self.weapon = weapon
         self.bounds = bounds
+
+
+    def take_damage(self, damage):
+        current_time = pygame.time.get_ticks()
+
+        if current_time - self.last_damage < self.damage_cooldown:
+            return
+
+        self.last_damage = current_time
+        self.health -= damage
 
 
     def update(self, keys):
