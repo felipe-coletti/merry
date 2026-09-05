@@ -3,6 +3,8 @@ import os
 
 from graphics.character_skin import CharacterSkin
 
+from ui.hud import HUD
+
 from maps.level import Level
 
 from entities.weapon import Weapon
@@ -22,7 +24,7 @@ class Game:
 
         self.level = Level(SCREEN_SIZE)
 
-        self.font = pygame.font.Font(None, 24)
+        self.hud = HUD()
 
         self.current_level = 0
 
@@ -195,18 +197,7 @@ class Game:
 
         self.player.update_adrenaline()
 
-    def draw_hud(self):
-        ammo_text = self.font.render(
-            f"Health: {self.player.health}/{self.player.max_health}\n"
-            f"Adrenaline: {self.player.adrenaline}/{self.player.max_adrenaline}\n"
-            f"Ammo: {self.player.weapon.ammo}/{self.player.weapon.capacity}\n"
-            f"Reserve Ammo: {self.player.weapon.reserve_ammo}",
-            True,
-            BLOOD_COLOR
-        )
-
-        self.screen.blit(ammo_text, (10, 10))
-
+    
     def draw(self):
         self.screen.fill(SKY_COLOR)
 
@@ -223,7 +214,10 @@ class Game:
         for projectile in self.projectiles:
             projectile.draw(self.screen)
 
-        self.draw_hud()
+        self.hud.draw(
+            self.screen,
+            self.player
+        )
 
         pygame.display.flip()
 

@@ -13,7 +13,7 @@ class Player(Character):
 
         self.adrenaline = 0
         self.max_adrenaline = 100
-        self.adrenaline_decay = 2
+        self.adrenaline_decay = 1
         self.adrenaline_cooldown = 500
         self.last_adrenaline = 0
 
