@@ -17,6 +17,48 @@ class HUD:
         self._draw_adrenaline(screen, player)
         self._draw_ammo(screen, player)
 
+
+    def _draw_text(
+        self,
+        screen,
+        text,
+        position,
+        font,
+        text_color=(255, 255, 255),
+        outline_color=(0, 0, 0),
+        outline_width=2
+    ):
+        for x in range(-outline_width, outline_width + 1):
+            for y in range(-outline_width, outline_width + 1):
+                if x == 0 and y == 0:
+                    continue
+
+                outline = font.render(
+                    text,
+                    True,
+                    outline_color
+                )
+
+                screen.blit(
+                    outline,
+                    (
+                        position[0] + x,
+                        position[1] + y
+                    )
+                )
+
+        text_surface = font.render(
+            text,
+            True,
+            text_color
+        )
+
+        screen.blit(
+            text_surface,
+            position
+        )
+
+
     def _draw_health(self, screen, player):
         position = (
             self.MARGIN,
@@ -34,18 +76,14 @@ class HUD:
             (220, 60, 60)
         )
 
-        text = self.font.render(
+        self._draw_text(
+            screen,
             f"HP: {player.health}",
-            True,
-            (255, 255, 255)
-        )
-
-        screen.blit(
-            text,
             (
                 position[0] + 8,
                 position[1] - 2
-            )
+            ),
+            self.font
         )
 
     def _draw_adrenaline(self, screen, player):
@@ -65,72 +103,76 @@ class HUD:
             (255, 180, 50)
         )
 
-        text = self.font.render(
+        self._draw_text(
+            screen,
             f"Adrenaline: {int(player.adrenaline)}",
-            True,
-            (255, 255, 255)
-        )
-
-        screen.blit(
-            text,
             (
                 position[0] + 8,
                 position[1] - 2
-            )
+            ),
+            self.font
         )
 
     def _draw_ammo(self, screen, player):
         weapon = player.weapon
-
         screen_width = screen.get_width()
 
-        ammo_text = self.font.render(
-            f"{weapon.ammo} / {weapon.capacity}",
+        ammo_text = f"{weapon.ammo} / {weapon.capacity}"
+        ammo_surface = self.font.render(
+            ammo_text,
             True,
             TEXT_COLOR
         )
 
         ammo_position = (
-            screen_width - ammo_text.get_width() - self.MARGIN,
+            screen_width - ammo_surface.get_width() - self.MARGIN,
             self.MARGIN
         )
 
-        screen.blit(
+        self._draw_text(
+            screen,
             ammo_text,
-            ammo_position
+            ammo_position,
+            self.font
         )
 
-        reserve_text = self.small_font.render(
-            f"Reserve: {weapon.reserve_ammo}",
+        reserve_text = f"Reserve: {weapon.reserve_ammo}"
+        reserve_surface = self.small_font.render(
+            reserve_text,
             True,
             TEXT_COLOR
         )
 
         reserve_position = (
-            screen_width - reserve_text.get_width() - self.MARGIN,
+            screen_width - reserve_surface.get_width() - self.MARGIN,
             ammo_position[1] + 30
         )
 
-        screen.blit(
+        self._draw_text(
+            screen,
             reserve_text,
-            reserve_position
+            reserve_position,
+            self.small_font
         )
 
         if weapon.reloading:
-            reload_text = self.small_font.render(
-                "Reloading...",
+            reload_text = "Reloading..."
+            reload_surface = self.small_font.render(
+                reload_text,
                 True,
                 TEXT_COLOR
             )
 
             reload_position = (
-                screen_width - reload_text.get_width() - self.MARGIN,
+                screen_width - reload_surface.get_width() - self.MARGIN,
                 reserve_position[1] + 25
             )
 
-            screen.blit(
+            self._draw_text(
+                screen,
                 reload_text,
-                reload_position
+                reload_position,
+                self.small_font
             )
 
     def _draw_bar(
