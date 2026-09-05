@@ -2,6 +2,9 @@ import pygame
 import os
 
 from graphics.character_skin import CharacterSkin
+
+from maps.level import Level
+
 from entities.weapon import Weapon
 from entities.player import Player
 from entities.ammo_pickup import AmmoPickup
@@ -16,6 +19,8 @@ class Game:
 
         self.clock = pygame.time.Clock()
         self.running = True
+
+        self.level = Level(SCREEN_SIZE)
 
         self.font = pygame.font.Font(None, 24)
 
@@ -111,6 +116,14 @@ class Game:
             )
         )
 
+        self.enemies.append(
+            Butterfly(
+                butterfly_image,
+                (200, 400),
+                scale=1.5,
+            )
+        )
+
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -167,7 +180,10 @@ class Game:
     def update(self):
         keys = pygame.key.get_pressed()
 
-        self.player.update(keys)
+        self.player.update(
+            keys,
+            self.level.collision_rects
+        )
 
         self.update_ammo_pickups()
         self.update_enemies()
@@ -187,6 +203,8 @@ class Game:
 
     def draw(self):
         self.screen.fill(SKY_COLOR)
+
+        self.level.draw(self.screen)
 
         for pickup in self.ammo_pickups:
             pickup.draw(self.screen)

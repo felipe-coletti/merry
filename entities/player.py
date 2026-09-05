@@ -24,33 +24,55 @@ class Player(Character):
         self.health -= damage
 
 
-    def update(self, keys):
+    def move(self, dx, dy, obstacles):
+        self.rect.x += dx
+
+        for obstacle in obstacles:
+            if self.rect.colliderect(obstacle):
+                if dx > 0:
+                    self.rect.right = obstacle.left
+                elif dx < 0:
+                    self.rect.left = obstacle.right
+
+        self.rect.y += dy
+
+        for obstacle in obstacles:
+            if self.rect.colliderect(obstacle):
+                if dy > 0:
+                    self.rect.bottom = obstacle.top
+                elif dy < 0:
+                    self.rect.top = obstacle.bottom
+
+
+    def update(self, keys, obstacles):
+        dx = 0
+        dy = 0
+
         moving = False
 
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             self.direction = "left"
-            self.rect.x -= self.speed
+            dx -= self.speed
             moving = True
 
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             self.direction = "right"
-            self.rect.x += self.speed
+            dx += self.speed
             moving = True
 
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             self.direction = "up"
-            self.rect.y -= self.speed
+            dy -= self.speed
             moving = True
 
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             self.direction = "down"
-            self.rect.y += self.speed
+            dy += self.speed
             moving = True
 
-        self.rect.clamp_ip(self.bounds)
+        self.move(dx, dy, obstacles)
 
         self.animate(moving)
-
         self.weapon.update(self.center)
 
 
