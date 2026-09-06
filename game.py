@@ -1,17 +1,14 @@
 import pygame
-import os
 
 from graphics.camera import Camera
-from graphics.character_skin import CharacterSkin
 
 from ui.hud import HUD
 
 from maps.level import Level
 
-from entities.weapon import Weapon
-from entities.player import Player
-from entities.ammo_pickup import AmmoPickup
-from entities.enemies.butterfly import Butterfly
+from entities.characters.harlequin import Harlequin
+from entities.items.ammo.magnum_ammo import MagnumAmmo
+from entities.enemies.butteflies.cyan_butterfly import CyanButterfly
 
 from settings import *
 
@@ -36,49 +33,9 @@ class Game:
 
         self.enemies = []
 
-        skin = CharacterSkin(
-            os.path.join(
-                "assets",
-                "images",
-                "characters",
-                "harlequin",
-                "harlequin.png"
-            )
-        )
-
         start_pos = PLAYER_POSITIONS.get(
             self.current_level,
             (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
-        )
-
-        weapon = Weapon(
-            os.path.join(
-                "assets",
-                "images",
-                "weapons",
-                "magnum",
-                "magnum.png"
-            ),
-            os.path.join(
-                "assets",
-                "images",
-                "weapons",
-                "magnum",
-                "magnum_projectile.png"
-            ),
-            os.path.join(
-                "assets",
-                "images",
-                "weapons",
-                "magnum",
-                "magnum_muzzle_flash.png"
-            ),
-            projectile_speed=30,
-            projectile_scale=0.5,
-            muzzle_offset=(37, -7),
-            fire_cooldown=550,
-            recoil_amount=8,
-            recoil_recovery=2
         )
 
         self.level_bounds = pygame.Rect(
@@ -86,53 +43,41 @@ class Game:
             self.level.size
         )
 
-        self.player = Player(skin, start_pos, weapon, self.level_bounds)
-
-        ammo_image = os.path.join(
-            "assets",
-            "images",
-            "weapons",
-            "magnum",
-            "magnum_pickup.png"
-        )
+        self.player = Harlequin(start_pos)        
 
         self.ammo_pickups.append(
-            AmmoPickup(
-                ammo_image,
+            MagnumAmmo(
                 (100, 100)
             )
         )
 
         self.ammo_pickups.append(
-            AmmoPickup(
-                ammo_image,
+            MagnumAmmo(
                 (1000, 400)
             )
         )
 
-        butterfly_image = os.path.join(
-            "assets",
-            "images",
-            "enemies",
-            "butterfly",
-            "butterfly.png"
-        )
-
         self.enemies.append(
-            Butterfly(
-                butterfly_image,
+            CyanButterfly(
                 (600, 300),
-                scale=1.5,
+                scale=2
             )
         )
 
         self.enemies.append(
-            Butterfly(
-                butterfly_image,
+            CyanButterfly(
                 (200, 400),
-                scale=1.5,
+                scale=2
             )
         )
+
+        self.enemies.append(
+            CyanButterfly(
+                (1000, 400),
+                scale=2
+            )
+        )
+
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -194,15 +139,15 @@ class Game:
     def update(self):
         keys = pygame.key.get_pressed()
 
+        self.camera.update(
+            self.player.rect,
+            self.level.size
+        )
+
         self.player.update(
             keys,
             self.level,
             self.camera
-        )
-
-        self.camera.update(
-            self.player.rect,
-            self.level.size
         )
 
         self.update_ammo_pickups()

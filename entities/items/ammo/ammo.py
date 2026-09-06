@@ -1,9 +1,9 @@
 import pygame
 
-class AmmoPickup:
+class Ammo:
     AMMO_AMOUNT = 6
 
-    def __init__(self, image_path, position, scale=0.5):
+    def __init__(self, image_path, position, scale=1):
         image = pygame.image.load(image_path).convert_alpha()
 
         self.image = pygame.transform.scale_by(image, scale)
