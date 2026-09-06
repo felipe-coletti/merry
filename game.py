@@ -158,7 +158,7 @@ class Game:
             enemy.update(self.player.center)
 
             if enemy.rect.colliderect(self.player.rect):
-                self.player.take_damage(1)
+                self.player.take_damage(10)
 
 
     def update_projectiles(self):

@@ -1,13 +1,24 @@
 import pygame
-
+from graphics import spritesheet
 
 class Butterfly:
     ADRENALINE_REWARD = 10
-    
-    def __init__(self, image_path, position, scale=0.5, speed=1, health=1):
-        image = pygame.image.load(image_path).convert_alpha()
+
+    def __init__(self, path, position, scale=0.5, speed=2, health=1):
+        image = pygame.image.load(path).convert_alpha()
+        sheet = spritesheet.Spritesheet(image)
+
+        butterfly_0 = sheet.get_image(
+            0,
+            3,
+            7,
+            42,
+            34,
+            scale,
+            (0, 0, 0)
+        )
         
-        self.image = pygame.transform.scale_by(image, scale)
+        self.image = butterfly_0
 
         self.position = pygame.Vector2(position)
         self.speed = speed
