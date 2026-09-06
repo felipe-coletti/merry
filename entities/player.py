@@ -62,27 +62,33 @@ class Player(Character):
         ) * self.adrenaline_speed_bonus
 
 
-    def move(self, dx, dy, obstacles):
+    def move(self, dx, dy, level):
         self.rect.x += dx
 
-        for obstacle in obstacles:
-            if self.rect.colliderect(obstacle):
-                if dx > 0:
-                    self.rect.right = obstacle.left
-                elif dx < 0:
-                    self.rect.left = obstacle.right
+        if not level.can_walk(self.rect):
+            self.rect.x -= dx
+        else:
+            for obstacle in level.obstacles:
+                if self.rect.colliderect(obstacle):
+                    if dx > 0:
+                        self.rect.right = obstacle.left
+                    elif dx < 0:
+                        self.rect.left = obstacle.right
 
         self.rect.y += dy
 
-        for obstacle in obstacles:
-            if self.rect.colliderect(obstacle):
-                if dy > 0:
-                    self.rect.bottom = obstacle.top
-                elif dy < 0:
-                    self.rect.top = obstacle.bottom
+        if not level.can_walk(self.rect):
+            self.rect.y -= dy
+        else:
+            for obstacle in level.obstacles:
+                if self.rect.colliderect(obstacle):
+                    if dy > 0:
+                        self.rect.bottom = obstacle.top
+                    elif dy < 0:
+                        self.rect.top = obstacle.bottom
 
 
-    def update(self, keys, obstacles):
+    def update(self, keys, obstacles, level, camera):
         dx = 0
         dy = 0
 
@@ -110,13 +116,13 @@ class Player(Character):
             dy += speed
             moving = True
 
-        self.move(dx, dy, obstacles)
+        self.move(dx, dy, level)
 
         self.animate(moving)
-        self.weapon.update(self.center)
+        self.weapon.update(self.center, camera)
 
 
-    def draw(self, screen):
-        super().draw(screen)
+    def draw(self, screen, camera):
+        super().draw(screen, camera)
 
-        self.weapon.draw(screen)
+        self.weapon.draw(screen, camera)

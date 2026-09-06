@@ -93,35 +93,6 @@ class Weapon:
         self.reloading = False
 
 
-    def update(self, owner_center):
-        mouse_position = pygame.Vector2(pygame.mouse.get_pos())
-        owner_center = pygame.Vector2(owner_center)
-
-        direction = mouse_position - owner_center
-
-        if direction.length_squared() != 0:
-            self.direction = direction.normalize()
-
-            self.angle = self.direction.angle_to(
-                pygame.Vector2(1, 0)
-            )
-
-        self.recoil = max(
-            self.recoil - self.recoil_recovery,
-            0
-        )
-
-        if self.reloading:
-            self._update_reload()
-
-        self.position = (
-                owner_center
-                + self.direction * (
-                        self.distance - self.recoil
-                )
-        )
-
-
     def shoot(self):
         current_time = pygame.time.get_ticks()
 
@@ -152,7 +123,41 @@ class Weapon:
         )
 
 
-    def draw(self, screen):
+    def update(self, owner_center, camera):
+        mouse_position = pygame.Vector2(
+            pygame.mouse.get_pos()
+        )
+
+        mouse_position += camera.position
+
+        owner_center = pygame.Vector2(owner_center)
+
+        direction = mouse_position - owner_center
+
+        if direction.length_squared() != 0:
+            self.direction = direction.normalize()
+
+            self.angle = self.direction.angle_to(
+                pygame.Vector2(1, 0)
+            )
+
+        self.recoil = max(
+            self.recoil - self.recoil_recovery,
+            0
+        )
+
+        if self.reloading:
+            self._update_reload()
+
+        self.position = (
+            owner_center
+            + self.direction * (
+                self.distance - self.recoil
+            )
+        )
+
+
+    def draw(self, screen, camera):
         image = self.image
 
         if self.direction.x < 0:
@@ -167,7 +172,11 @@ class Weapon:
             self.angle
         )
 
-        rect = image.get_rect(center=self.position)
+        rect = image.get_rect(
+            center=self.position
+        )
+
+        rect = camera.apply(rect)
 
         screen.blit(image, rect)
 
@@ -180,5 +189,7 @@ class Weapon:
             flash_rect = flash.get_rect(
                 center=self.muzzle_flash_position
             )
+
+            flash_rect = camera.apply(flash_rect)
 
             screen.blit(flash, flash_rect)

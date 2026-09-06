@@ -36,9 +36,14 @@ class Character:
         return self.rect.center
 
 
-    def draw(self, screen):
+    def draw(self, screen, camera):
         frame = int(self.frame_index)
 
-        char = self.skin.frames[self.direction][frame]
+        char = self.skin.frames[
+            self.direction
+        ][frame]
 
-        screen.blit(char, self.rect)
+        screen.blit(
+            char,
+            camera.apply(self.rect)
+        )

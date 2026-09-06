@@ -1,26 +1,15 @@
 import pygame
 
-from settings import FLOOR_COLOR, WALL_COLOR, OBSTACLE_COLOR
+from settings import FLOOR_COLOR, OBSTACLE_COLOR
 
 class Level:
     def __init__(self, size):
         self.size = size
 
-        self.walls = [
-            pygame.Rect(0, 0, size[0], 20),
-            pygame.Rect(
-                0,
-                size[1] - 20,
-                size[0],
-                20
-            ),
-            pygame.Rect(0, 0, 20, size[1]),
-            pygame.Rect(
-                size[0] - 20,
-                0,
-                20,
-                size[1]
-            ),
+        self.floor_areas = [
+            pygame.Rect(100, 100, 600, 400),
+            pygame.Rect(500, 300, 500, 200),
+            pygame.Rect(900, 150, 500, 500),
         ]
 
         self.obstacles = [
@@ -30,21 +19,25 @@ class Level:
 
     @property
     def collision_rects(self):
-        return self.walls + self.obstacles
+        return self.obstacles
 
-    def draw(self, screen):
-        screen.fill(FLOOR_COLOR)
+    def can_walk(self, rect):
+        return any(
+            floor.contains(rect)
+            for floor in self.floor_areas
+        )
 
-        for wall in self.walls:
+    def draw(self, screen, camera):
+        for floor in self.floor_areas:
             pygame.draw.rect(
                 screen,
-                WALL_COLOR,
-                wall
+                FLOOR_COLOR,
+                camera.apply(floor)
             )
 
         for obstacle in self.obstacles:
             pygame.draw.rect(
                 screen,
                 OBSTACLE_COLOR,
-                obstacle
+                camera.apply(obstacle)
             )

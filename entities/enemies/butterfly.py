@@ -46,5 +46,8 @@ class Butterfly:
         self.rect.center = self.position
 
 
-    def draw(self, screen):
-        screen.blit(self.image, self.rect)
+    def draw(self, screen, camera):
+        screen.blit(
+            self.image,
+            camera.apply(self.rect)
+        )

@@ -1,6 +1,7 @@
 import pygame
 import os
 
+from graphics.camera import Camera
 from graphics.character_skin import CharacterSkin
 
 from ui.hud import HUD
@@ -22,7 +23,8 @@ class Game:
         self.clock = pygame.time.Clock()
         self.running = True
 
-        self.level = Level(SCREEN_SIZE)
+        self.camera = Camera(self.screen.get_size())
+        self.level = Level((1600, 1200))
 
         self.hud = HUD()
 
@@ -79,13 +81,12 @@ class Game:
             recoil_recovery=2
         )
 
-        self.bounds = pygame.Rect(
-            0,
-            0,
-            *SCREEN_SIZE
+        self.level_bounds = pygame.Rect(
+            (0, 0),
+            self.level.size
         )
 
-        self.player = Player(skin, start_pos, weapon, self.bounds)
+        self.player = Player(skin, start_pos, weapon, self.level_bounds)
 
         ammo_image = os.path.join(
             "assets",
@@ -99,6 +100,13 @@ class Game:
             AmmoPickup(
                 ammo_image,
                 (100, 100)
+            )
+        )
+
+        self.ammo_pickups.append(
+            AmmoPickup(
+                ammo_image,
+                (1200, 1000)
             )
         )
 
@@ -179,7 +187,7 @@ class Game:
 
                     break
 
-            if not self.bounds.collidepoint(projectile.position):
+            if not self.level_bounds.collidepoint(projectile.position):
                 self.projectiles.remove(projectile)
     
 
@@ -188,7 +196,14 @@ class Game:
 
         self.player.update(
             keys,
-            self.level.collision_rects
+            self.level.collision_rects,
+            self.level,
+            self.camera
+        )
+
+        self.camera.update(
+            self.player.rect,
+            self.level.size
         )
 
         self.update_ammo_pickups()
@@ -201,18 +216,27 @@ class Game:
     def draw(self):
         self.screen.fill(SKY_COLOR)
 
-        self.level.draw(self.screen)
+        self.level.draw(self.screen, self.camera)
 
         for pickup in self.ammo_pickups:
-            pickup.draw(self.screen)
+            pickup.draw(self.screen, self.camera)
 
-        self.player.draw(self.screen)
+        self.player.draw(
+            self.screen,
+            self.camera
+        )
 
         for enemy in self.enemies:
-            enemy.draw(self.screen)
+            enemy.draw(
+                self.screen,
+                self.camera
+            )
 
         for projectile in self.projectiles:
-            projectile.draw(self.screen)
+            projectile.draw(
+                self.screen,
+                self.camera
+            )
 
         self.hud.draw(
             self.screen,

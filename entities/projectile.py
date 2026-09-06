@@ -24,7 +24,7 @@ class Projectile:
         self.position += self.direction * self.speed
         self.rect.center = self.position
 
-    def draw(self, screen):
+    def draw(self, screen, camera):
         image = pygame.transform.rotate(
             self.image,
             self.angle
@@ -33,5 +33,7 @@ class Projectile:
         rect = image.get_rect(
             center=self.position
         )
+
+        rect = camera.apply(rect)
 
         screen.blit(image, rect)

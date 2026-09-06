@@ -9,5 +9,10 @@ class AmmoPickup:
         self.image = pygame.transform.scale_by(image, scale)
         self.rect = self.image.get_rect(center=position)
 
-    def draw(self, screen):
-        screen.blit(self.image, self.rect)
+    def draw(self, screen, camera):
+        rect = camera.apply(self.rect)
+
+        screen.blit(
+            self.image,
+            rect
+        )
