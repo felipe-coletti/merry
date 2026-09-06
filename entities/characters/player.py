@@ -61,21 +61,21 @@ class Player(Character):
         )
 
 
-    def move(self, dx, dy, level):
+    def move(self, dx, dy, map):
         new_rect = self.rect.copy()
         new_rect.x += dx
 
-        if level.can_move(new_rect):
+        if map.can_move(new_rect):
             self.rect.x = new_rect.x
 
         new_rect = self.rect.copy()
         new_rect.y += dy
 
-        if level.can_move(new_rect):
+        if map.can_move(new_rect):
             self.rect.y = new_rect.y
 
 
-    def update(self, keys, level, camera):
+    def update(self, keys, map, camera):
         dx = 0
         dy = 0
 
@@ -103,7 +103,7 @@ class Player(Character):
             dy += speed
             moving = True
 
-        self.move(dx, dy, level)
+        self.move(dx, dy, map)
 
         self.animate(moving)
         self.weapon.update(self.center, camera.position)

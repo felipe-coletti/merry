@@ -3,23 +3,29 @@ import pygame
 from settings import FLOOR_COLOR, OBSTACLE_COLOR
 
 class Level:
-    def __init__(self, size):
+    def __init__(
+        self,
+        size,
+        player_spawn,
+        floor_areas,
+        obstacles,
+        enemies,
+        ammo
+    ):
         self.size = size
+        self.player_spawn = player_spawn
 
-        self.floor_areas = [
-            pygame.Rect(100, 100, 600, 400),
-            pygame.Rect(500, 300, 500, 200),
-            pygame.Rect(900, 150, 500, 500),
-        ]
+        self.floor_areas = floor_areas
+        self.obstacles = obstacles
 
-        self.obstacles = [
-            pygame.Rect(300, 200, 100, 40),
-            pygame.Rect(500, 350, 40, 120),
-        ]
+        self.enemies = enemies
+        self.ammo = ammo
 
-    @property
-    def collision_rects(self):
-        return self.obstacles
+        self.bounds = pygame.Rect(
+            (0, 0),
+            self.size
+        )
+
 
     def can_walk(self, movement_rect):
         for floor in self.floor_areas:
@@ -45,6 +51,7 @@ class Level:
                 return False
 
         return True
+
 
     def draw(self, screen, camera):
         for floor in self.floor_areas:

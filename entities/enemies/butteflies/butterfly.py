@@ -4,7 +4,7 @@ from graphics import spritesheet
 class Butterfly:
     ADRENALINE_REWARD = 10
 
-    def __init__(self, path, position, scale=0.5, speed=2, health=1):
+    def __init__(self, path, position, scale=1, speed=2, health=1):
         image = pygame.image.load(path).convert_alpha()
         sheet = spritesheet.Spritesheet(image)
 

@@ -3,7 +3,7 @@ import os
 from entities.enemies.butteflies.butterfly import Butterfly
 
 class CyanButterfly(Butterfly):
-    def __init__(self, position, scale=1):
+    def __init__(self, position, scale=2):
         butterfly_image = os.path.join(
             "assets",
             "images",

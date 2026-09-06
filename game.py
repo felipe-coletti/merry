@@ -1,14 +1,10 @@
 import pygame
 
 from graphics.camera import Camera
-
 from ui.hud import HUD
-
-from maps.level import Level
+from maps.map import Map
 
 from entities.characters.harlequin import Harlequin
-from entities.items.ammo.magnum_ammo import MagnumAmmo
-from entities.enemies.butteflies.cyan_butterfly import CyanButterfly
 
 from settings import *
 
@@ -21,62 +17,41 @@ class Game:
         self.running = True
 
         self.camera = Camera(self.screen.get_size())
-        self.level = Level((1600, 1200))
-
         self.hud = HUD()
 
         self.current_level = 0
+        self.level = Map.get_level(
+            self.current_level
+        )
 
         self.ammo_pickups = []
-
         self.projectiles = []
-
         self.enemies = []
 
-        start_pos = PLAYER_POSITIONS.get(
-            self.current_level,
-            (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+        self.player = Harlequin(
+            self.level.player_spawn
         )
 
-        self.level_bounds = pygame.Rect(
-            (0, 0),
-            self.level.size
-        )
+        self.create_level_entities()
 
-        self.player = Harlequin(start_pos)        
 
-        self.ammo_pickups.append(
-            MagnumAmmo(
-                (100, 100)
-            )
-        )
+    def create_level_entities(self):
+        self.create_enemies()
+        self.create_ammo_pickups()
 
-        self.ammo_pickups.append(
-            MagnumAmmo(
-                (1000, 400)
-            )
-        )
 
-        self.enemies.append(
-            CyanButterfly(
-                (600, 300),
-                scale=2
-            )
-        )
+    def create_enemies(self):
+        for enemy_type, position in self.level.enemies:
+            enemy = enemy_type(position)
 
-        self.enemies.append(
-            CyanButterfly(
-                (200, 400),
-                scale=2
-            )
-        )
+            self.enemies.append(enemy)
 
-        self.enemies.append(
-            CyanButterfly(
-                (1000, 400),
-                scale=2
-            )
-        )
+
+    def create_ammo_pickups(self):
+        for ammo_type, position in self.level.ammo:
+            ammo = ammo_type(position)
+
+            self.ammo_pickups.append(ammo)
 
 
     def handle_events(self):
@@ -108,9 +83,13 @@ class Game:
 
     def update_enemies(self):
         for enemy in self.enemies[:]:
-            enemy.update(self.player.center)
+            enemy.update(
+                self.player.center
+            )
 
-            if enemy.rect.colliderect(self.player.rect):
+            if enemy.rect.colliderect(
+                self.player.rect
+            ):
                 self.player.take_damage(10)
 
 
@@ -118,10 +97,19 @@ class Game:
         for projectile in self.projectiles[:]:
             projectile.update()
 
+            projectile_removed = False
+
             for enemy in self.enemies[:]:
-                if enemy.rect.colliderect(projectile.rect):
+                if enemy.rect.colliderect(
+                    projectile.rect
+                ):
                     enemy.take_damage(1)
-                    self.projectiles.remove(projectile)
+
+                    self.projectiles.remove(
+                        projectile
+                    )
+
+                    projectile_removed = True
 
                     if enemy.health <= 0:
                         self.enemies.remove(enemy)
@@ -132,9 +120,14 @@ class Game:
 
                     break
 
-            if not self.level_bounds.collidepoint(projectile.position):
-                self.projectiles.remove(projectile)
-    
+            if not projectile_removed:
+                if not self.level.bounds.collidepoint(
+                    projectile.position
+                ):
+                    self.projectiles.remove(
+                        projectile
+                    )
+
 
     def update(self):
         keys = pygame.key.get_pressed()
@@ -156,14 +149,20 @@ class Game:
 
         self.player.update_adrenaline()
 
-    
+
     def draw(self):
         self.screen.fill(SKY_COLOR)
 
-        self.level.draw(self.screen, self.camera)
+        self.level.draw(
+            self.screen,
+            self.camera
+        )
 
         for pickup in self.ammo_pickups:
-            pickup.draw(self.screen, self.camera)
+            pickup.draw(
+                self.screen,
+                self.camera
+            )
 
         self.player.draw(
             self.screen,
@@ -188,6 +187,7 @@ class Game:
         )
 
         pygame.display.flip()
+
 
     def run(self):
         while self.running:
