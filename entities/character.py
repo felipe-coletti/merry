@@ -1,3 +1,5 @@
+import pygame
+
 class Character:
     def __init__(self, skin, position, speed=5):
         self.skin = skin

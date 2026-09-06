@@ -21,11 +21,30 @@ class Level:
     def collision_rects(self):
         return self.obstacles
 
-    def can_walk(self, rect):
-        return any(
-            floor.contains(rect)
-            for floor in self.floor_areas
+    def can_walk(self, movement_rect):
+        for floor in self.floor_areas:
+            if floor.contains(movement_rect):
+                return True
+
+        return False
+
+
+    def can_move(self, rect):
+        movement_rect = pygame.Rect(
+            rect.left,
+            rect.centery,
+            rect.width,
+            rect.height // 2
         )
+
+        if not self.can_walk(movement_rect):
+            return False
+
+        for obstacle in self.obstacles:
+            if movement_rect.colliderect(obstacle):
+                return False
+
+        return True
 
     def draw(self, screen, camera):
         for floor in self.floor_areas:

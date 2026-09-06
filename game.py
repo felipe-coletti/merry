@@ -106,7 +106,7 @@ class Game:
         self.ammo_pickups.append(
             AmmoPickup(
                 ammo_image,
-                (1200, 1000)
+                (1000, 400)
             )
         )
 
@@ -196,7 +196,6 @@ class Game:
 
         self.player.update(
             keys,
-            self.level.collision_rects,
             self.level,
             self.camera
         )

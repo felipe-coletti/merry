@@ -58,37 +58,25 @@ class Player(Character):
 
     def current_speed(self):
         return self.speed + (
-            self.adrenaline / self.max_adrenaline
-        ) * self.adrenaline_speed_bonus
+            self.adrenaline // (self.max_adrenaline // self.adrenaline_speed_bonus)
+        )
 
 
     def move(self, dx, dy, level):
-        self.rect.x += dx
+        new_rect = self.rect.copy()
+        new_rect.x += dx
 
-        if not level.can_walk(self.rect):
-            self.rect.x -= dx
-        else:
-            for obstacle in level.obstacles:
-                if self.rect.colliderect(obstacle):
-                    if dx > 0:
-                        self.rect.right = obstacle.left
-                    elif dx < 0:
-                        self.rect.left = obstacle.right
+        if level.can_move(new_rect):
+            self.rect.x = new_rect.x
 
-        self.rect.y += dy
+        new_rect = self.rect.copy()
+        new_rect.y += dy
 
-        if not level.can_walk(self.rect):
-            self.rect.y -= dy
-        else:
-            for obstacle in level.obstacles:
-                if self.rect.colliderect(obstacle):
-                    if dy > 0:
-                        self.rect.bottom = obstacle.top
-                    elif dy < 0:
-                        self.rect.top = obstacle.bottom
+        if level.can_move(new_rect):
+            self.rect.y = new_rect.y
 
 
-    def update(self, keys, obstacles, level, camera):
+    def update(self, keys, level, camera):
         dx = 0
         dy = 0
 
