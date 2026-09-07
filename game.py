@@ -70,6 +70,7 @@ class Game:
         self.ammo_pickups.clear()
         self.projectiles.clear()
         self.enemies.clear()
+        self.blood.clear()
 
         self.player = Harlequin(
             self.level.player_spawn
