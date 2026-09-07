@@ -11,7 +11,7 @@ class BloodPool(Blood):
                 "images",
                 "effects",
                 "blood",
-                "blood.png"
+                "blood_pool.png"
             )
         )
 
