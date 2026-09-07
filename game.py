@@ -16,6 +16,8 @@ class Game:
         self.clock = pygame.time.Clock()
         self.running = True
 
+        self.game_over = False
+
         self.camera = Camera(self.screen.get_size())
         self.hud = HUD()
 
@@ -54,10 +56,33 @@ class Game:
             self.ammo_pickups.append(ammo)
 
 
+    def restart(self):
+        self.level = Map.get_level(self.current_level)
+
+        self.ammo_pickups.clear()
+        self.projectiles.clear()
+        self.enemies.clear()
+
+        self.player = Harlequin(
+            self.level.player_spawn
+        )
+
+        self.create_level_entities()
+
+        self.game_over = False
+
+
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+
+            if self.game_over:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_r:
+                        self.restart()
+
+                continue
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == pygame.BUTTON_LEFT:
@@ -130,6 +155,9 @@ class Game:
 
 
     def update(self):
+        if self.game_over:
+            return
+    
         keys = pygame.key.get_pressed()
 
         self.camera.update(
@@ -148,6 +176,49 @@ class Game:
         self.update_projectiles()
 
         self.player.update_adrenaline()
+
+        if self.player.health <= 0:
+            self.game_over = True
+
+
+    def draw_game_over(self):
+        overlay = pygame.Surface(self.screen.get_size())
+        overlay.set_alpha(180)
+        overlay.fill((0, 0, 0))
+
+        self.screen.blit(overlay, (0, 0))
+
+        font = pygame.font.Font(None, 72)
+        text = font.render(
+            "GAME OVER",
+            True,
+            (255, 255, 255)
+        )
+
+        text_rect = text.get_rect(
+            center=(
+                self.screen.get_width() // 2,
+                self.screen.get_height() // 2 - 30
+            )
+        )
+
+        self.screen.blit(text, text_rect)
+
+        font = pygame.font.Font(None, 32)
+        text = font.render(
+            "Pressione R para tentar novamente",
+            True,
+            (255, 255, 255)
+        )
+
+        text_rect = text.get_rect(
+            center=(
+                self.screen.get_width() // 2,
+                self.screen.get_height() // 2 + 40
+            )
+        )
+
+        self.screen.blit(text, text_rect)
 
 
     def draw(self):
@@ -185,6 +256,10 @@ class Game:
             self.screen,
             self.player
         )
+
+        if self.game_over:
+            self.draw_game_over()
+
 
         pygame.display.flip()
 
