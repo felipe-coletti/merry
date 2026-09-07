@@ -14,8 +14,10 @@ class Player(Character):
         self.adrenaline = 0
         self.max_adrenaline = 100
         self.adrenaline_decay = 1
-        self.adrenaline_cooldown = 500
+        self.adrenaline_decay_delay = 1000
+        self.adrenaline_decay_cooldown = 500
         self.last_adrenaline = 0
+        self.last_adrenaline_decay = 0
 
         self.adrenaline_speed_bonus = 5
 
@@ -37,19 +39,26 @@ class Player(Character):
 
 
     def add_adrenaline(self, amount):
+        current_time = pygame.time.get_ticks()
+
         self.adrenaline = min(
             self.adrenaline + amount,
             self.max_adrenaline
         )
 
+        self.last_adrenaline = current_time
+
 
     def update_adrenaline(self):
         current_time = pygame.time.get_ticks()
 
-        if current_time - self.last_adrenaline < self.adrenaline_cooldown:
+        if current_time - self.last_adrenaline < self.adrenaline_decay_delay:
             return
 
-        self.last_adrenaline = current_time
+        if current_time - self.last_adrenaline_decay < self.adrenaline_decay_cooldown:
+            return
+
+        self.last_adrenaline_decay = current_time
 
         if self.adrenaline > 0:
             self.adrenaline -= self.adrenaline_decay

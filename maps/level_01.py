@@ -26,6 +26,7 @@ class Level01(Level):
             enemies=[
                 (CyanButterfly, (600, 300)),
                 (CyanButterfly, (200, 400)),
+                (CyanButterfly, (650, 500))
             ],
 
             ammo=[

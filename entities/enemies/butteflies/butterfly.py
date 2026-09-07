@@ -3,7 +3,7 @@ import pygame
 class Butterfly:
     ADRENALINE_REWARD = 10
 
-    def __init__(self, skin, position, scale=1, speed=2, health=1):
+    def __init__(self, skin, position, speed=2, health=1):
         self.skin = skin
 
         frame = self.skin.frames[0]
