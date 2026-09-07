@@ -1,6 +1,6 @@
 import os
 
-from graphics.character_skin import CharacterSkin
+from graphics.skin.character_skin import CharacterSkin
 from entities.characters.player import Player
 from entities.weapons.magnum import Magnum
 

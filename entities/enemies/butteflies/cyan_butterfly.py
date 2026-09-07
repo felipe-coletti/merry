@@ -1,7 +1,7 @@
 import os
 
 from entities.enemies.butteflies.butterfly import Butterfly
-from graphics.butterfly_skin import ButterflySkin
+from graphics.skin.butterfly_skin import ButterflySkin
 
 class CyanButterfly(Butterfly):
     def __init__(self, position, scale=2):

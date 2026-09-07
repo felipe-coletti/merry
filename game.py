@@ -6,6 +6,8 @@ from maps.map import Map
 
 from entities.characters.harlequin import Harlequin
 
+from effects.blood_pool import BloodPool
+
 from settings import *
 
 class Game:
@@ -29,6 +31,7 @@ class Game:
         self.ammo_pickups = []
         self.projectiles = []
         self.enemies = []
+        self.blood = []
 
         self.player = Harlequin(
             self.level.player_spawn
@@ -54,6 +57,11 @@ class Game:
             ammo = ammo_type(position)
 
             self.ammo_pickups.append(ammo)
+
+
+    def create_blood(self, position):
+        blood = BloodPool(position)
+        self.blood.append(blood)
 
 
     def restart(self):
@@ -154,8 +162,14 @@ class Game:
                     )
 
 
+    def update_blood(self):
+        for blood in self.blood:
+            blood.update()
+
+
     def update(self):
         if self.game_over:
+            self.update_blood()
             return
     
         keys = pygame.key.get_pressed()
@@ -174,10 +188,15 @@ class Game:
         self.update_ammo_pickups()
         self.update_enemies()
         self.update_projectiles()
+        self.update_blood()
 
         self.player.update_adrenaline()
 
         if self.player.health <= 0:
+            blood_position = self.player.rect.midbottom
+
+            self.create_blood(blood_position)
+
             self.game_over = True
 
 
@@ -228,6 +247,12 @@ class Game:
             self.screen,
             self.camera
         )
+
+        for blood in self.blood:
+            blood.draw(
+                self.screen,
+                self.camera
+            )
 
         for pickup in self.ammo_pickups:
             pickup.draw(
