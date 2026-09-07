@@ -190,7 +190,7 @@ class Game:
 
         font = pygame.font.Font(None, 72)
         text = font.render(
-            "GAME OVER",
+            "LOVE WINS",
             True,
             (255, 255, 255)
         )
@@ -206,7 +206,7 @@ class Game:
 
         font = pygame.font.Font(None, 32)
         text = font.render(
-            "Pressione R para tentar novamente",
+            "Press R to try again",
             True,
             (255, 255, 255)
         )
