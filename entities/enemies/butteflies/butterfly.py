@@ -1,32 +1,28 @@
 import pygame
-from graphics import spritesheet
 
 class Butterfly:
     ADRENALINE_REWARD = 10
 
-    def __init__(self, path, position, scale=1, speed=2, health=1):
-        image = pygame.image.load(path).convert_alpha()
-        sheet = spritesheet.Spritesheet(image)
+    def __init__(self, skin, position, scale=1, speed=2, health=1):
+        self.skin = skin
 
-        butterfly_0 = sheet.get_image(
-            0,
-            3,
-            7,
-            42,
-            34,
-            scale,
-            (0, 0, 0)
-        )
-        
-        self.image = butterfly_0
+        frame = self.skin.frames[0]
 
         self.position = pygame.Vector2(position)
+        self.rect = frame.get_rect(center=self.position)
+        
+        self.frame_index = 0
+        self.animation_speed = 0.15
+
         self.speed = speed
         self.health = health
 
-        self.rect = self.image.get_rect(
-            center=self.position
-        )
+
+    def animate(self):
+        self.frame_index += self.animation_speed
+
+        if self.frame_index >= len(self.skin.frames):
+            self.frame_index = 0
 
 
     def take_damage(self, damage):
@@ -45,9 +41,16 @@ class Butterfly:
 
         self.rect.center = self.position
 
+        self.animate()
+
 
     def draw(self, screen, camera):
-        screen.blit(
-            self.image,
-            camera.apply(self.rect)
+        frame = self.skin.frames[int(self.frame_index)]
+
+        rect = frame.get_rect(
+            center=self.rect.center
         )
+
+        rect = camera.apply(rect)
+
+        screen.blit(frame, rect)

@@ -1,19 +1,16 @@
-import pygame
-
 class Character:
     def __init__(self, skin, position, speed=5):
         self.skin = skin
+        self.direction = "down"
 
-        frame = self.skin.frames["down"][0]
+        frame = self.skin.frames[self.direction][0]
 
         self.rect = frame.get_rect(topleft=position)
 
-        self.direction = "down"
-
-        self.speed = speed
-
         self.frame_index = 0
         self.animation_speed = speed / 50
+
+        self.speed = speed
 
 
     def animate(self, moving):
