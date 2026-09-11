@@ -1,6 +1,8 @@
 import pygame
 
 class Butterfly:
+    DAMAGE = 10
+
     ADRENALINE_REWARD = 10
 
     def __init__(self, skin, position, speed=2, health=1):
@@ -30,6 +32,15 @@ class Butterfly:
             self.health -= damage
         else:
             self.health = 0
+
+
+    def damages_player(self, player):
+        return self.rect.colliderect(player.rect)
+
+
+    @property
+    def dead(self):
+        return self.health <= 0
 
 
     def update(self, target):

@@ -23,6 +23,8 @@ class Player(Character):
 
         self.weapon = weapon
 
+        self.previous_position = pygame.Vector2(self.position)
+
 
     def take_damage(self, damage):
         current_time = pygame.time.get_ticks()
@@ -84,7 +86,14 @@ class Player(Character):
             self.rect.y = new_rect.y
 
 
+    @property
+    def moved(self):
+        return self.position != self.previous_position
+
+
     def update(self, keys, map, camera):
+        self.previous_position = pygame.Vector2(self.position)
+        
         dx = 0
         dy = 0
 

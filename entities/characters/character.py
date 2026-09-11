@@ -1,3 +1,5 @@
+import pygame
+
 class Character:
     def __init__(self, skin, position, speed=5):
         self.skin = skin
@@ -6,6 +8,7 @@ class Character:
         frame = self.skin.frames[self.direction][0]
 
         self.rect = frame.get_rect(topleft=position)
+        self.mask = pygame.mask.from_surface(frame)
 
         self.frame_index = 0
         self.animation_speed = speed / 50
@@ -41,6 +44,8 @@ class Character:
         char = self.skin.frames[
             self.direction
         ][frame]
+
+        self.mask = pygame.mask.from_surface(char)
 
         screen.blit(
             char,

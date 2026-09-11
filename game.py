@@ -32,6 +32,7 @@ class Game:
         self.projectiles = []
         self.enemies = []
         self.blood = []
+        self.dropped_swords = []
 
         self.player = Harlequin(
             self.level.player_spawn
@@ -71,6 +72,7 @@ class Game:
         self.projectiles.clear()
         self.enemies.clear()
         self.blood.clear()
+        self.dropped_swords.clear()
 
         self.player = Harlequin(
             self.level.player_spawn
@@ -117,14 +119,21 @@ class Game:
 
     def update_enemies(self):
         for enemy in self.enemies[:]:
-            enemy.update(
-                self.player.center
+            enemy.update(self.player.center)
+
+            released_objects = getattr(
+                enemy,
+                "released_objects",
+                []
             )
 
-            if enemy.rect.colliderect(
-                self.player.rect
-            ):
-                self.player.take_damage(10)
+            if released_objects:
+                self.dropped_swords.extend(released_objects)
+                enemy.released_objects.clear()
+
+            if hasattr(enemy, "damages_player"):
+                if enemy.damages_player(self.player):
+                    self.player.take_damage(enemy.DAMAGE)
 
 
     def update_projectiles(self):
@@ -133,26 +142,62 @@ class Game:
 
             projectile_removed = False
 
-            for enemy in self.enemies[:]:
-                if enemy.rect.colliderect(
-                    projectile.rect
-                ):
-                    enemy.take_damage(1)
+            distance = projectile.previous_position.distance_to(
+                projectile.position
+            )
 
-                    self.projectiles.remove(
-                        projectile
-                    )
+            steps = max(1, int(distance / 2))
 
-                    projectile_removed = True
+            for i in range(1, steps + 1):
+                position = projectile.previous_position.lerp(
+                    projectile.position,
+                    i / steps
+                )
 
-                    if enemy.health <= 0:
-                        self.enemies.remove(enemy)
+                test_rect = projectile.mask.get_rect(
+                    center=position
+                )
 
-                        self.player.add_adrenaline(
-                            enemy.ADRENALINE_REWARD
+                for enemy in self.enemies:
+                    for sword in getattr(enemy, "swords", []):
+                        if sword.collides_with(
+                            test_rect,
+                            projectile.mask
+                        ):
+                            self.projectiles.remove(projectile)
+                            projectile_removed = True
+                            break
+
+                    if projectile_removed:
+                        break
+
+                if projectile_removed:
+                    break
+
+            if projectile_removed:
+                continue
+
+            if not projectile_removed:
+                for enemy in self.enemies[:]:
+                    if enemy.rect.colliderect(
+                        projectile.rect
+                    ):
+                        enemy.take_damage(25)
+
+                        self.projectiles.remove(
+                            projectile
                         )
 
-                    break
+                        projectile_removed = True
+
+                        if enemy.dead:
+                            self.enemies.remove(enemy)
+
+                            self.player.add_adrenaline(
+                                enemy.ADRENALINE_REWARD
+                            )
+
+                        break
 
             if not projectile_removed:
                 if not self.level.bounds.collidepoint(
@@ -166,6 +211,14 @@ class Game:
     def update_blood(self):
         for blood in self.blood:
             blood.update()
+
+
+    def update_dropped_swords(self):
+        for sword in self.dropped_swords:
+            sword.update()
+
+            if sword.damages_player(self.player):
+                self.player.take_damage(sword.DAMAGE)
 
 
     def update(self):
@@ -188,6 +241,7 @@ class Game:
 
         self.update_ammo_pickups()
         self.update_enemies()
+        self.update_dropped_swords()
         self.update_projectiles()
         self.update_blood()
 
@@ -271,6 +325,9 @@ class Game:
                 self.screen,
                 self.camera
             )
+
+        for sword in self.dropped_swords:
+            sword.draw(self.screen, self.camera)
 
         for projectile in self.projectiles:
             projectile.draw(

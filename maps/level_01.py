@@ -3,6 +3,7 @@ import pygame
 from maps.level import Level
 
 from entities.enemies.butteflies.cyan_butterfly import CyanButterfly
+from entities.enemies.angel.angel import Angel
 from entities.items.ammo.magnum_ammo import MagnumAmmo
 
 class Level01(Level):
@@ -26,7 +27,8 @@ class Level01(Level):
             enemies=[
                 (CyanButterfly, (600, 300)),
                 (CyanButterfly, (200, 400)),
-                (CyanButterfly, (650, 500))
+                (CyanButterfly, (650, 500)),
+                (Angel, (900, 400))
             ],
 
             ammo=[
