@@ -1,7 +1,7 @@
 import pygame
 
 from effects.blood_pool import BloodPool
-from entities.characters.harlequin import Harlequin
+from entities.characters.merry import Merry
 from graphics.camera import Camera
 from maps.map import Map
 from settings import FPS, MAX_DT, SCREEN_SIZE, SCREEN_TITLE, SKY_COLOR
@@ -41,7 +41,7 @@ class Game:
         self.blood.clear()
         self.dropped_swords.clear()
 
-        self.player = Harlequin(self.level.player_spawn)
+        self.player = Merry(self.level.player_spawn)
 
         self.create_level_entities()
 
