@@ -117,6 +117,9 @@ class AngelForm2:
     def pupil_position(self):
         return self.position + self.aim_direction * self.PUPIL_OFFSET
 
+    def _distance_from_pupil(self, target):
+        return self.pupil_position.distance_to(target)
+
     @property
     def projectile_blockers(self):
         return []
@@ -201,13 +204,22 @@ class AngelForm2:
             if elapsed >= self.CHARGE_TIME:
                 self._change_state("firing", current_time)
 
-                self.beam = AngelBeam(self.pupil_position, self.aim_direction)
+                self.beam = AngelBeam(
+                    self.pupil_position,
+                    self.aim_direction,
+                    self._distance_from_pupil(target)
+                )
 
         elif self.state == "firing":
             if offset.length_squared() > 0:
                 self._turn_aim_towards(offset, self.BEAM_TURN_SPEED * dt)
 
-            self.beam.update(self.pupil_position, self.aim_direction)
+            self.beam.update(
+                self.pupil_position,
+                self.aim_direction,
+                self._distance_from_pupil(target),
+                dt
+            )
 
             if elapsed >= self.FIRE_TIME:
                 self._change_state("idle", current_time)
