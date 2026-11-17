@@ -41,7 +41,7 @@ class AngelForm2:
 
     # Durante o disparo o raio persegue o jogador, mas mais devagar do
     # que ele consegue correr de perto: dá para fugir, não é acerto certo.
-    BEAM_TURN_SPEED = 40  # graus por segundo
+    BEAM_TURN_SPEED = 25  # graus por segundo
 
     def __init__(self, angel):
         self.angel = angel
