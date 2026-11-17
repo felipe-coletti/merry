@@ -10,7 +10,11 @@ from utils.assets import load_image
 
 class AngelForm2:
     EYE_SCALE = 4
-    ORB_SCALE = 2
+
+    # Na escala 1 o último quadro da esfera (48px) tem a mesma largura da
+    # íris do olho (12px x EYE_SCALE): a esfera cobre a íris e o raio,
+    # que é a esfera esticada, sai com a largura dela.
+    ORB_SCALE = 1
 
     # angel_eye.png: grade 5x5 de olhos de 24x24, com passo de 27px.
     # O centro (2, 2) olha para frente; o 3x3 interno é o olhar moderado
@@ -20,15 +24,12 @@ class AngelForm2:
     EYE_SIZE = 24
 
     # angel_beam.png: 5 quadros de 48x48 de uma esfera crescendo. Os 4
-    # primeiros animam a carga; o último fica na boca do raio ao disparar.
+    # primeiros animam a carga; o último vira o raio ao disparar.
     ORB_SIZE = 48
     ORB_FRAMES = 5
 
     # Alvo mais longe que isso faz o olho girar até o extremo.
     FAR_GAZE_DISTANCE = 200
-
-    # Distância do centro do olho até onde nasce o raio (a pupila).
-    PUPIL_OFFSET = 24
 
     # Mantém distância para usar o raio com segurança.
     MOVE_SPEED = 80
@@ -46,7 +47,7 @@ class AngelForm2:
     def __init__(self, angel):
         self.angel = angel
 
-        self.eye_frames = self._load_eye_frames()
+        self.eye_frames, self.iris_offsets = self._load_eye_frames()
         self.orb_frames = self._load_orb_frames()
 
         self.gaze = (0, 0)
@@ -74,6 +75,7 @@ class AngelForm2:
         )
 
         frames = {}
+        iris_offsets = {}
 
         for row in range(5):
             for column in range(5):
@@ -83,7 +85,7 @@ class AngelForm2:
                 if 2 in map(abs, gaze) and 1 in map(abs, gaze):
                     continue
 
-                frames[gaze] = sheet.get_image(
+                frame = sheet.get_image(
                     self.EYE_GRID_ORIGIN + column * self.EYE_GRID_STEP,
                     self.EYE_GRID_ORIGIN + row * self.EYE_GRID_STEP,
                     self.EYE_SIZE,
@@ -91,7 +93,38 @@ class AngelForm2:
                     self.EYE_SCALE
                 )
 
-        return frames
+                frames[gaze] = frame
+                iris_offsets[gaze] = self._find_iris_offset(frame)
+
+        return frames, iris_offsets
+
+    @staticmethod
+    def _find_iris_offset(frame):
+        """Deslocamento do centro da íris em relação ao centro do quadro.
+
+        A íris é a área azul do olho; medir no sprite faz o raio sair do
+        lugar certo em cada direção de olhar, mesmo se a arte mudar.
+        """
+        width, height = frame.get_size()
+
+        xs = []
+        ys = []
+
+        for x in range(width):
+            for y in range(height):
+                red, _, blue, alpha = frame.get_at((x, y))
+
+                if alpha and blue > red + 40:
+                    xs.append(x)
+                    ys.append(y)
+
+        if not xs:
+            return pygame.Vector2()
+
+        return pygame.Vector2(
+            (min(xs) + max(xs) + 1) / 2 - width / 2,
+            (min(ys) + max(ys) + 1) / 2 - height / 2
+        )
 
     def _load_orb_frames(self):
         sheet = Spritesheet(
@@ -115,7 +148,7 @@ class AngelForm2:
 
     @property
     def pupil_position(self):
-        return self.position + self.aim_direction * self.PUPIL_OFFSET
+        return self.position + self.iris_offsets[self.gaze]
 
     def _distance_from_pupil(self, target):
         return self.pupil_position.distance_to(target)
@@ -189,6 +222,10 @@ class AngelForm2:
 
         offset = pygame.Vector2(target) - self.position
 
+        # Antes da máquina de estados: o raio nasce na íris do quadro
+        # que será desenhado neste frame.
+        self._update_gaze(offset)
+
         current_time = pygame.time.get_ticks()
         elapsed = current_time - self.state_start
 
@@ -205,6 +242,7 @@ class AngelForm2:
                 self._change_state("firing", current_time)
 
                 self.beam = AngelBeam(
+                    self.orb_frames[-1],
                     self.pupil_position,
                     self.aim_direction,
                     self._distance_from_pupil(target)
@@ -226,12 +264,8 @@ class AngelForm2:
 
                 self.beam = None
 
-        self._update_gaze(offset)
-
     def _orb_frame(self):
-        if self.state == "firing":
-            return self.orb_frames[-1]
-
+        # Durante o disparo a esfera já faz parte do raio.
         if self.state == "charging":
             progress = (
                 pygame.time.get_ticks() - self.state_start
