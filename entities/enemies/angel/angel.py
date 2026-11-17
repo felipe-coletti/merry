@@ -1,32 +1,49 @@
 import pygame
 
+from entities.enemies.enemy import Enemy
 from entities.enemies.angel.forms.angel_form_1 import AngelForm1
 from entities.enemies.angel.forms.angel_form_2 import AngelForm2
 
 
-class Angel:
+class Angel(Enemy):
+    """Inimigo com várias formas; morre ao sair da última.
+
+    Forma 1: espadas em órbita (dano por contato), cai com 3 tiros e
+             solta as espadas no chão.
+    Forma 2: olho que dispara um raio de dano contínuo; um tiro no
+             olho mata.
+    """
+
     ADRENALINE_REWARD = 25
 
     def __init__(self, position):
+        super().__init__()
+
         self.position = pygame.Vector2(position)
 
-        self.health = 100
-        self.max_health = 100
-
         self.form_index = 0
-        self.released_objects = []
 
         self.forms = [
             AngelForm1(self),
             AngelForm2(self),
         ]
 
-        self.current_form = self.forms[self.form_index]
         self.rect = self.current_form.rect
 
     @property
-    def swords(self):
-        return getattr(self.current_form, "swords", [])
+    def current_form(self):
+        return self.forms[min(self.form_index, len(self.forms) - 1)]
+
+    @property
+    def dead(self):
+        return self.form_index >= len(self.forms)
+
+    @property
+    def projectile_blockers(self):
+        if self.dead:
+            return []
+
+        return self.current_form.projectile_blockers
 
     def next_form(self):
         self.released_objects.extend(
@@ -35,26 +52,26 @@ class Angel:
 
         self.form_index += 1
 
-        if self.form_index >= len(self.forms):
-            self.health = 0
-            return
-
-        self.current_form = self.forms[self.form_index]
-        self.rect = self.current_form.rect
+        if not self.dead:
+            self.rect = self.current_form.rect
 
     def take_damage(self, damage):
-        self.current_form.take_damage(damage)
+        if not self.dead:
+            self.current_form.take_damage(damage)
 
-    @property
-    def dead(self):
-        if self.form_index < len(self.forms):
-            return False
+    def attack(self, player, dt):
+        if not self.dead:
+            self.current_form.attack(player, dt)
 
-        return self.health <= 0
+    def update(self, target, dt):
+        if self.dead:
+            return
 
-    def update(self, target):
-        self.current_form.update(target)
-        self.rect = self.current_form.rect
+        self.current_form.update(target, dt)
+
+        if not self.dead:
+            self.rect = self.current_form.rect
 
     def draw(self, screen, camera):
-        self.current_form.draw(screen, camera)
+        if not self.dead:
+            self.current_form.draw(screen, camera)

@@ -1,14 +1,12 @@
 import pygame
 
-from graphics.camera import Camera
-from ui.hud import HUD
-from maps.map import Map
-
-from entities.characters.harlequin import Harlequin
-
 from effects.blood_pool import BloodPool
+from entities.characters.harlequin import Harlequin
+from graphics.camera import Camera
+from maps.map import Map
+from settings import FPS, MAX_DT, SCREEN_SIZE, SCREEN_TITLE, SKY_COLOR
+from ui.hud import HUD
 
-from settings import *
 
 class Game:
     def __init__(self):
@@ -18,15 +16,13 @@ class Game:
         self.clock = pygame.time.Clock()
         self.running = True
 
-        self.game_over = False
-
         self.camera = Camera(self.screen.get_size())
         self.hud = HUD()
 
+        self.game_over_font = pygame.font.Font(None, 72)
+        self.game_over_small_font = pygame.font.Font(None, 32)
+
         self.current_level = 0
-        self.level = Map.get_level(
-            self.current_level
-        )
 
         self.ammo_pickups = []
         self.projectiles = []
@@ -34,36 +30,7 @@ class Game:
         self.blood = []
         self.dropped_swords = []
 
-        self.player = Harlequin(
-            self.level.player_spawn
-        )
-
-        self.create_level_entities()
-
-
-    def create_level_entities(self):
-        self.create_enemies()
-        self.create_ammo_pickups()
-
-
-    def create_enemies(self):
-        for enemy_type, position in self.level.enemies:
-            enemy = enemy_type(position)
-
-            self.enemies.append(enemy)
-
-
-    def create_ammo_pickups(self):
-        for ammo_type, position in self.level.ammo:
-            ammo = ammo_type(position)
-
-            self.ammo_pickups.append(ammo)
-
-
-    def create_blood(self, position):
-        blood = BloodPool(position)
-        self.blood.append(blood)
-
+        self.restart()
 
     def restart(self):
         self.level = Map.get_level(self.current_level)
@@ -74,14 +41,21 @@ class Game:
         self.blood.clear()
         self.dropped_swords.clear()
 
-        self.player = Harlequin(
-            self.level.player_spawn
-        )
+        self.player = Harlequin(self.level.player_spawn)
 
         self.create_level_entities()
 
         self.game_over = False
 
+    def create_level_entities(self):
+        for enemy_type, position in self.level.enemies:
+            self.enemies.append(enemy_type(position))
+
+        for ammo_type, position in self.level.ammo:
+            self.ammo_pickups.append(ammo_type(position))
+
+    def create_blood(self, position):
+        self.blood.append(BloodPool(position))
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -89,171 +63,127 @@ class Game:
                 self.running = False
 
             if self.game_over:
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_r:
-                        self.restart()
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                    self.restart()
 
                 continue
 
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == pygame.BUTTON_LEFT:
-                    projectile = self.player.weapon.shoot()
+            if (
+                event.type == pygame.MOUSEBUTTONDOWN
+                and event.button == pygame.BUTTON_LEFT
+            ):
+                projectile = self.player.weapon.shoot()
 
-                    if projectile:
-                        self.projectiles.append(projectile)
+                if projectile:
+                    self.projectiles.append(projectile)
 
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:
-                    self.player.weapon.reload()
-
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                self.player.weapon.reload()
 
     def update_ammo_pickups(self):
         for pickup in self.ammo_pickups[:]:
             if self.player.rect.colliderect(pickup.rect):
-                self.player.weapon.add_ammo(
-                    pickup.AMMO_AMOUNT
-                )
+                self.player.weapon.add_ammo(pickup.AMMO_AMOUNT)
 
                 self.ammo_pickups.remove(pickup)
 
+    def update_enemies(self, dt):
+        for enemy in self.enemies:
+            enemy.update(self.player.center, dt)
+            enemy.attack(self.player, dt)
 
-    def update_enemies(self):
-        for enemy in self.enemies[:]:
-            enemy.update(self.player.center)
+            self.dropped_swords.extend(enemy.pop_released_objects())
 
-            released_objects = getattr(
-                enemy,
-                "released_objects",
-                []
-            )
-
-            if released_objects:
-                self.dropped_swords.extend(released_objects)
-                enemy.released_objects.clear()
-
-            if hasattr(enemy, "damages_player"):
-                if enemy.damages_player(self.player):
-                    self.player.take_damage(enemy.DAMAGE)
-
-
-    def update_projectiles(self):
-        for projectile in self.projectiles[:]:
-            projectile.update()
-
-            projectile_removed = False
-
-            distance = projectile.previous_position.distance_to(
-                projectile.position
-            )
-
-            steps = max(1, int(distance / 2))
-
-            for i in range(1, steps + 1):
-                position = projectile.previous_position.lerp(
-                    projectile.position,
-                    i / steps
-                )
-
-                test_rect = projectile.mask.get_rect(
-                    center=position
-                )
-
-                for enemy in self.enemies:
-                    for sword in getattr(enemy, "swords", []):
-                        if sword.collides_with(
-                            test_rect,
-                            projectile.mask
-                        ):
-                            self.projectiles.remove(projectile)
-                            projectile_removed = True
-                            break
-
-                    if projectile_removed:
-                        break
-
-                if projectile_removed:
-                    break
-
-            if projectile_removed:
-                continue
-
-            if not projectile_removed:
-                for enemy in self.enemies[:]:
-                    if enemy.rect.colliderect(
-                        projectile.rect
-                    ):
-                        enemy.take_damage(25)
-
-                        self.projectiles.remove(
-                            projectile
-                        )
-
-                        projectile_removed = True
-
-                        if enemy.dead:
-                            self.enemies.remove(enemy)
-
-                            self.player.add_adrenaline(
-                                enemy.ADRENALINE_REWARD
-                            )
-
-                        break
-
-            if not projectile_removed:
-                if not self.level.bounds.collidepoint(
-                    projectile.position
-                ):
-                    self.projectiles.remove(
-                        projectile
-                    )
-
-
-    def update_blood(self):
-        for blood in self.blood:
-            blood.update()
-
-
-    def update_dropped_swords(self):
+    def update_dropped_swords(self, dt):
         for sword in self.dropped_swords:
-            sword.update()
+            sword.update(dt)
 
             if sword.damages_player(self.player):
                 self.player.take_damage(sword.DAMAGE)
 
+    def projectile_hit(self, projectile):
+        """Aplica o primeiro impacto ao longo da trajetória.
 
-    def update(self):
+        Retorna True se o projétil atingiu algo e deve ser removido.
+        """
+        for test_rect in projectile.swept_rects():
+            for enemy in self.enemies:
+                if enemy.dead:
+                    continue
+
+                for blocker in enemy.projectile_blockers:
+                    if blocker.collides_with(test_rect, projectile.mask):
+                        return True
+
+                if enemy.rect.colliderect(test_rect):
+                    enemy.take_damage(projectile.damage)
+                    return True
+
+        return False
+
+    def update_projectiles(self, dt):
+        for projectile in self.projectiles[:]:
+            projectile.update(dt)
+
+            if (
+                self.projectile_hit(projectile)
+                or not self.level.bounds.collidepoint(projectile.position)
+            ):
+                self.projectiles.remove(projectile)
+
+    def remove_dead_enemies(self):
+        for enemy in self.enemies[:]:
+            if not enemy.dead:
+                continue
+
+            self.dropped_swords.extend(enemy.pop_released_objects())
+
+            self.enemies.remove(enemy)
+
+            self.player.add_adrenaline(enemy.ADRENALINE_REWARD)
+
+    def update_blood(self, dt):
+        for blood in self.blood:
+            blood.update(dt)
+
+    def update(self, dt):
         if self.game_over:
-            self.update_blood()
+            self.update_blood(dt)
             return
-    
+
         keys = pygame.key.get_pressed()
 
-        self.camera.update(
-            self.player.rect,
-            self.level.size
-        )
-
-        self.player.update(
-            keys,
-            self.level,
-            self.camera
-        )
+        # O jogador se move primeiro; a câmera o segue no mesmo frame e
+        # só então a mira é calculada com a câmera já atualizada.
+        self.player.update(keys, self.level, dt)
+        self.camera.update(self.player.rect, self.level.size)
+        self.player.aim(self.camera, dt)
 
         self.update_ammo_pickups()
-        self.update_enemies()
-        self.update_dropped_swords()
-        self.update_projectiles()
-        self.update_blood()
+        self.update_enemies(dt)
+        self.update_dropped_swords(dt)
+        self.update_projectiles(dt)
+        self.remove_dead_enemies()
+        self.update_blood(dt)
 
         self.player.update_adrenaline()
 
-        if self.player.health <= 0:
-            blood_position = self.player.rect.midbottom
-
-            self.create_blood(blood_position)
+        if self.player.dead:
+            self.create_blood(self.player.rect.midbottom)
 
             self.game_over = True
 
+    def _draw_centered_text(self, text, font, offset_y):
+        surface = font.render(text, True, (255, 255, 255))
+
+        rect = surface.get_rect(
+            center=(
+                self.screen.get_width() // 2,
+                self.screen.get_height() // 2 + offset_y
+            )
+        )
+
+        self.screen.blit(surface, rect)
 
     def draw_game_over(self):
         overlay = pygame.Surface(self.screen.get_size())
@@ -262,95 +192,41 @@ class Game:
 
         self.screen.blit(overlay, (0, 0))
 
-        font = pygame.font.Font(None, 72)
-        text = font.render(
-            "LOVE WINS",
-            True,
-            (255, 255, 255)
-        )
-
-        text_rect = text.get_rect(
-            center=(
-                self.screen.get_width() // 2,
-                self.screen.get_height() // 2 - 30
-            )
-        )
-
-        self.screen.blit(text, text_rect)
-
-        font = pygame.font.Font(None, 32)
-        text = font.render(
+        self._draw_centered_text("LOVE WINS", self.game_over_font, -30)
+        self._draw_centered_text(
             "Press R to try again",
-            True,
-            (255, 255, 255)
+            self.game_over_small_font,
+            40
         )
-
-        text_rect = text.get_rect(
-            center=(
-                self.screen.get_width() // 2,
-                self.screen.get_height() // 2 + 40
-            )
-        )
-
-        self.screen.blit(text, text_rect)
-
 
     def draw(self):
         self.screen.fill(SKY_COLOR)
 
-        self.level.draw(
-            self.screen,
-            self.camera
+        self.level.draw(self.screen, self.camera)
+
+        drawables = (
+            self.blood
+            + self.ammo_pickups
+            + [self.player]
+            + self.enemies
+            + self.dropped_swords
+            + self.projectiles
         )
 
-        for blood in self.blood:
-            blood.draw(
-                self.screen,
-                self.camera
-            )
+        for drawable in drawables:
+            drawable.draw(self.screen, self.camera)
 
-        for pickup in self.ammo_pickups:
-            pickup.draw(
-                self.screen,
-                self.camera
-            )
-
-        self.player.draw(
-            self.screen,
-            self.camera
-        )
-
-        for enemy in self.enemies:
-            enemy.draw(
-                self.screen,
-                self.camera
-            )
-
-        for sword in self.dropped_swords:
-            sword.draw(self.screen, self.camera)
-
-        for projectile in self.projectiles:
-            projectile.draw(
-                self.screen,
-                self.camera
-            )
-
-        self.hud.draw(
-            self.screen,
-            self.player
-        )
+        self.hud.draw(self.screen, self.player)
 
         if self.game_over:
             self.draw_game_over()
 
-
         pygame.display.flip()
-
 
     def run(self):
         while self.running:
-            self.handle_events()
-            self.update()
-            self.draw()
+            dt = min(self.clock.tick(FPS) / 1000, MAX_DT)
 
-            self.clock.tick(FPS)
+            self.handle_events()
+            self.update(dt)
+            self.draw()

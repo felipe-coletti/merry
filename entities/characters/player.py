@@ -2,130 +2,132 @@ import pygame
 
 from entities.characters.character import Character
 
+
 class Player(Character):
+    MAX_HEALTH = 100
+    DAMAGE_COOLDOWN = 500
+
+    MAX_ADRENALINE = 100
+    ADRENALINE_DECAY = 1
+    ADRENALINE_DECAY_DELAY = 1000
+    ADRENALINE_DECAY_COOLDOWN = 500
+
+    # A cada MAX_ADRENALINE / ADRENALINE_SPEED_STEPS de adrenalina o
+    # jogador ganha ADRENALINE_SPEED_PER_STEP pixels/s de velocidade.
+    ADRENALINE_SPEED_STEPS = 5
+    ADRENALINE_SPEED_PER_STEP = 60
+
+    MOVEMENT_KEYS = (
+        ((pygame.K_LEFT, pygame.K_a), "left", (-1, 0)),
+        ((pygame.K_RIGHT, pygame.K_d), "right", (1, 0)),
+        ((pygame.K_UP, pygame.K_w), "up", (0, -1)),
+        ((pygame.K_DOWN, pygame.K_s), "down", (0, 1)),
+    )
+
     def __init__(self, skin, position, weapon):
         super().__init__(skin, position)
 
-        self.health = 100
-        self.max_health = 100
-        self.damage_cooldown = 500
-        self.last_damage = 0
+        self.max_health = self.MAX_HEALTH
+        self.health = self.max_health
+        self.last_damage = -self.DAMAGE_COOLDOWN
 
+        self.max_adrenaline = self.MAX_ADRENALINE
         self.adrenaline = 0
-        self.max_adrenaline = 100
-        self.adrenaline_decay = 1
-        self.adrenaline_decay_delay = 1000
-        self.adrenaline_decay_cooldown = 500
         self.last_adrenaline = 0
         self.last_adrenaline_decay = 0
 
-        self.adrenaline_speed_bonus = 5
-
         self.weapon = weapon
 
-        self.previous_position = pygame.Vector2(self.position)
+        self.previous_position = self.position
 
+    @property
+    def dead(self):
+        return self.health <= 0
 
     def take_damage(self, damage):
+        """Dano de impacto: respeita a invencibilidade após cada golpe."""
         current_time = pygame.time.get_ticks()
 
-        if current_time - self.last_damage < self.damage_cooldown:
+        if current_time - self.last_damage < self.DAMAGE_COOLDOWN:
             return
 
         self.last_damage = current_time
+        self.health = max(0, self.health - damage)
 
-        if self.health > damage:
-            self.health -= damage
-        else:
-            self.health = 0
-
+    def take_damage_over_time(self, damage_per_second, dt):
+        """Dano contínuo (ex.: raios): ignora a invencibilidade."""
+        self.health = max(0, self.health - damage_per_second * dt)
 
     def add_adrenaline(self, amount):
-        current_time = pygame.time.get_ticks()
-
         self.adrenaline = min(
             self.adrenaline + amount,
             self.max_adrenaline
         )
 
-        self.last_adrenaline = current_time
-
+        self.last_adrenaline = pygame.time.get_ticks()
 
     def update_adrenaline(self):
         current_time = pygame.time.get_ticks()
 
-        if current_time - self.last_adrenaline < self.adrenaline_decay_delay:
+        if current_time - self.last_adrenaline < self.ADRENALINE_DECAY_DELAY:
             return
 
-        if current_time - self.last_adrenaline_decay < self.adrenaline_decay_cooldown:
+        if current_time - self.last_adrenaline_decay < self.ADRENALINE_DECAY_COOLDOWN:
             return
 
         self.last_adrenaline_decay = current_time
 
-        if self.adrenaline > 0:
-            self.adrenaline -= self.adrenaline_decay
-
+        self.adrenaline = max(0, self.adrenaline - self.ADRENALINE_DECAY)
 
     def current_speed(self):
+        step = self.max_adrenaline // self.ADRENALINE_SPEED_STEPS
+
         return self.speed + (
-            self.adrenaline // (self.max_adrenaline // self.adrenaline_speed_bonus)
+            self.adrenaline // step * self.ADRENALINE_SPEED_PER_STEP
         )
 
+    def move(self, velocity, dt, level):
+        # Cada eixo é testado separadamente para permitir deslizar
+        # ao longo de paredes.
+        for axis in (0, 1):
+            new_position = self.float_position.copy()
+            new_position[axis] += velocity[axis] * dt
 
-    def move(self, dx, dy, map):
-        new_rect = self.rect.copy()
-        new_rect.x += dx
+            new_rect = self.rect.copy()
+            new_rect.topleft = (
+                round(new_position.x),
+                round(new_position.y)
+            )
 
-        if map.can_move(new_rect):
-            self.rect.x = new_rect.x
-
-        new_rect = self.rect.copy()
-        new_rect.y += dy
-
-        if map.can_move(new_rect):
-            self.rect.y = new_rect.y
-
+            if level.can_move(new_rect):
+                self.float_position = new_position
+                self.rect.topleft = new_rect.topleft
 
     @property
     def moved(self):
         return self.position != self.previous_position
 
+    def update(self, keys, level, dt):
+        self.previous_position = self.position
 
-    def update(self, keys, map, camera):
-        self.previous_position = pygame.Vector2(self.position)
-        
-        dx = 0
-        dy = 0
+        direction = pygame.Vector2()
 
-        speed = self.current_speed()
+        for key_codes, facing, step in self.MOVEMENT_KEYS:
+            if any(keys[key] for key in key_codes):
+                self.direction = facing
+                direction += step
 
-        moving = False
+        moving = direction.length_squared() > 0
 
-        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            self.direction = "left"
-            dx -= speed
-            moving = True
+        if moving:
+            # Normaliza para não andar mais rápido na diagonal.
+            velocity = direction.normalize() * self.current_speed()
+            self.move(velocity, dt, level)
 
-        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            self.direction = "right"
-            dx += speed
-            moving = True
+        self.animate(moving, dt)
 
-        if keys[pygame.K_UP] or keys[pygame.K_w]:
-            self.direction = "up"
-            dy -= speed
-            moving = True
-
-        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            self.direction = "down"
-            dy += speed
-            moving = True
-
-        self.move(dx, dy, map)
-
-        self.animate(moving)
-        self.weapon.update(self.center, camera.position)
-
+    def aim(self, camera, dt):
+        self.weapon.update(self.center, camera.position, dt)
 
     def draw(self, screen, camera):
         super().draw(screen, camera)

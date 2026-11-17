@@ -2,9 +2,10 @@ import pygame
 
 
 class AngelBeam:
-    DAMAGE = 25
+    DAMAGE_PER_SECOND = 25
 
     LENGTH = 2000
+    WIDTH = 8
 
     def __init__(self, position, direction):
         self.position = pygame.Vector2(position)
@@ -14,41 +15,26 @@ class AngelBeam:
         self.position = pygame.Vector2(position)
 
         if direction.length_squared() > 0:
-            self.direction = pygame.Vector2(
-                direction
-            ).normalize()
+            self.direction = pygame.Vector2(direction).normalize()
 
     def get_end_position(self):
-        return (
-            self.position +
-            self.direction * self.LENGTH
+        return self.position + self.direction * self.LENGTH
+
+    def hits(self, rect):
+        return bool(
+            rect.clipline(
+                tuple(self.position),
+                tuple(self.get_end_position())
+            )
         )
 
     def draw(self, screen, camera):
-        start = camera.apply(
-            pygame.Rect(
-                self.position.x,
-                self.position.y,
-                1,
-                1
-            )
-        ).center
-
-        end_position = self.get_end_position()
-
-        end = camera.apply(
-            pygame.Rect(
-                end_position.x,
-                end_position.y,
-                1,
-                1
-            )
-        ).center
+        offset = -camera.position
 
         pygame.draw.line(
             screen,
             (255, 255, 255),
-            start,
-            end,
-            8
+            self.position + offset,
+            self.get_end_position() + offset,
+            self.WIDTH
         )
