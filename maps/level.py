@@ -2,7 +2,8 @@ from itertools import pairwise
 
 import pygame
 
-from settings import FLOOR_COLOR, OBSTACLE_COLOR
+from settings import OBSTACLE_COLOR
+from utils.assets import load_image
 
 
 def is_covered(rect, areas):
@@ -44,6 +45,8 @@ def is_covered(rect, areas):
 
 
 class Level:
+    FLOOR_TILE_SCALE = 2
+
     def __init__(
         self,
         size,
@@ -64,6 +67,39 @@ class Level:
 
         self.bounds = pygame.Rect((0, 0), self.size)
 
+        # Retângulo que envolve todo o piso: inimigos voadores ficam
+        # dentro dele para não sumirem no céu.
+        self.floor_bounds = floor_areas[0].unionall(floor_areas[1:])
+
+        self.floor_surface = self._render_floor()
+
+    def _render_floor(self):
+        """Desenha o piso uma vez numa superfície do tamanho do nível."""
+        tile = pygame.transform.scale_by(
+            load_image("images", "maps", "floor.png"),
+            self.FLOOR_TILE_SCALE
+        )
+
+        tile_width, tile_height = tile.get_size()
+
+        surface = pygame.Surface(self.size, pygame.SRCALPHA)
+
+        for floor in self.floor_areas:
+            surface.set_clip(floor)
+
+            # Os tiles seguem uma grade global, então áreas vizinhas
+            # se encaixam sem emenda visível.
+            start_x = floor.left - floor.left % tile_width
+            start_y = floor.top - floor.top % tile_height
+
+            for x in range(start_x, floor.right, tile_width):
+                for y in range(start_y, floor.bottom, tile_height):
+                    surface.blit(tile, (x, y))
+
+        surface.set_clip(None)
+
+        return surface
+
     def can_walk(self, movement_rect):
         return is_covered(movement_rect, self.floor_areas)
 
@@ -82,8 +118,7 @@ class Level:
         return movement_rect.collidelist(self.obstacles) == -1
 
     def draw(self, screen, camera):
-        for floor in self.floor_areas:
-            pygame.draw.rect(screen, FLOOR_COLOR, camera.apply(floor))
+        screen.blit(self.floor_surface, camera.apply(self.bounds))
 
         for obstacle in self.obstacles:
             pygame.draw.rect(screen, OBSTACLE_COLOR, camera.apply(obstacle))

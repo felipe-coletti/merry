@@ -89,7 +89,7 @@ class Game:
 
     def update_enemies(self, dt):
         for enemy in self.enemies:
-            enemy.update(self.player.center, dt)
+            enemy.update(self.player.center, dt, self.level)
             enemy.attack(self.player, dt)
 
             self.dropped_swords.extend(enemy.pop_released_objects())

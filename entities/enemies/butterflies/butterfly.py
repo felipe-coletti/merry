@@ -37,7 +37,7 @@ class Butterfly(Enemy):
     def dead(self):
         return self.health <= 0
 
-    def update(self, target, dt):
+    def update(self, target, dt, level):
         direction = pygame.Vector2(target) - self.position
 
         if direction.length_squared() > 0:

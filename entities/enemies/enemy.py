@@ -32,7 +32,7 @@ class Enemy:
 
         return released
 
-    def update(self, target, dt):
+    def update(self, target, dt, level):
         pass
 
     def draw(self, screen, camera):
