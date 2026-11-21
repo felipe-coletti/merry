@@ -2,7 +2,7 @@ import pygame
 
 from maps.level import Level
 
-from entities.enemies.butteflies.cyan_butterfly import CyanButterfly
+from entities.enemies.butterflies.cyan_butterfly import CyanButterfly
 from entities.enemies.angel.angel import Angel
 from entities.items.ammo.magnum_ammo import MagnumAmmo
 

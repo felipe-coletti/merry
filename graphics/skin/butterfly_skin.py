@@ -1,36 +1,24 @@
-import pygame
-from graphics import spritesheet
+from graphics.spritesheet import Spritesheet
+
 
 class ButterflySkin:
-    BORDER = 3
-    SPACING = 3
-    COLUMN_WIDTH = 34
+    FRAME_WIDTH = 42
+    FRAME_HEIGHT = 34
 
+    FRAME_POSITIONS = ((3, 6), (51, 6))
 
-    def __init__(self, path, scale=2, animation_speed=0.5):
+    def __init__(self, image, scale=2):
         self.scale = scale
-        self.animation_speed = animation_speed
 
-        image = pygame.image.load(path).convert_alpha()
-        sheet = spritesheet.Spritesheet(image)
+        sheet = Spritesheet(image)
 
-        self.frames = self._load_frames(sheet)
-
-
-    def _sprite(self, sheet, x, y):
-        return sheet.get_image(
-            0,
-            x,
-            y,
-            42,
-            34,
-            self.scale,
-            (0, 0, 0)
-        )
-
-
-    def _load_frames(self, sheet):
-        return [
-            self._sprite(sheet, 3, 6),
-            self._sprite(sheet, 51, 6)
+        self.frames = [
+            sheet.get_image(
+                x,
+                y,
+                self.FRAME_WIDTH,
+                self.FRAME_HEIGHT,
+                self.scale
+            )
+            for x, y in self.FRAME_POSITIONS
         ]

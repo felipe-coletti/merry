@@ -1,19 +1,11 @@
-import os
-
 from entities.items.ammo.ammo import Ammo
+from utils.assets import load_image
+
 
 class MagnumAmmo(Ammo):
     def __init__(self, position, scale=0.5):
-        magnum_ammo_image_path = os.path.join(
-            "assets",
-            "images",
-            "items",
-            "ammo",
-            "magnum_ammo.png"
-        )
-
         super().__init__(
-            image_path=magnum_ammo_image_path,
+            image=load_image("images", "items", "ammo", "magnum_ammo.png"),
             position=position,
             scale=scale
         )
